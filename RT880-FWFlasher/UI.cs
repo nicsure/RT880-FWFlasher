@@ -10,6 +10,7 @@ namespace RT880_FWFlasher
         {
             InitializeComponent();
             EnumerateSerialPorts();
+            DarkMode.EnableDarkMode(this.Handle);
         }
 
         private void EnumerateSerialPorts()
@@ -109,6 +110,7 @@ namespace RT880_FWFlasher
                 flashingPort = port;
                 try
                 {
+                    SetStatus("Erasing Flash");
                     byte[] packet = ConstructPacket(0x39, 0x3305, [0x10], 0, 1);
                     if (!WriteData(port, packet)) return;
                     if (!GetAck(port)) return;
@@ -164,7 +166,7 @@ namespace RT880_FWFlasher
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 StartButton.Enabled = true;
-                FileNameLabel.Text = ofd.FileName;
+                BinFileBox.Text = ofd.FileName;
             }
         }
 
@@ -173,7 +175,7 @@ namespace RT880_FWFlasher
             byte[] firmware;
             try
             {
-                firmware = File.ReadAllBytes(FileNameLabel.Text);
+                firmware = File.ReadAllBytes(BinFileBox.Text);
             }
             catch
             {

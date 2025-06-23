@@ -30,7 +30,6 @@
         {
             MainGrid = new TableLayoutPanel();
             label1 = new Label();
-            FileNameLabel = new Label();
             BrowseButton = new Button();
             StatusPanel = new TableLayoutPanel();
             StatusLabel = new Label();
@@ -38,6 +37,7 @@
             AbortButton = new Button();
             ProgressBar = new TrackBar();
             ComPorts = new ComboBox();
+            BinFileBox = new TextBox();
             MainGrid.SuspendLayout();
             StatusPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)ProgressBar).BeginInit();
@@ -47,17 +47,17 @@
             // 
             MainGrid.BackColor = Color.Black;
             MainGrid.ColumnCount = 3;
-            MainGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            MainGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 49.9999962F));
             MainGrid.ColumnStyles.Add(new ColumnStyle());
             MainGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50.0000076F));
             MainGrid.Controls.Add(label1, 0, 0);
-            MainGrid.Controls.Add(FileNameLabel, 0, 1);
             MainGrid.Controls.Add(BrowseButton, 0, 2);
             MainGrid.Controls.Add(StatusPanel, 0, 5);
             MainGrid.Controls.Add(StartButton, 0, 3);
             MainGrid.Controls.Add(AbortButton, 1, 3);
             MainGrid.Controls.Add(ProgressBar, 0, 4);
             MainGrid.Controls.Add(ComPorts, 2, 3);
+            MainGrid.Controls.Add(BinFileBox, 0, 1);
             MainGrid.Dock = DockStyle.Fill;
             MainGrid.Location = new Point(0, 0);
             MainGrid.Name = "MainGrid";
@@ -84,23 +84,6 @@
             label1.TabIndex = 1;
             label1.Text = "Firmware Image File";
             // 
-            // FileNameLabel
-            // 
-            FileNameLabel.AutoSize = true;
-            FileNameLabel.BackColor = Color.FromArgb(64, 0, 64);
-            FileNameLabel.BorderStyle = BorderStyle.FixedSingle;
-            MainGrid.SetColumnSpan(FileNameLabel, 3);
-            FileNameLabel.Dock = DockStyle.Fill;
-            FileNameLabel.Font = new Font("Consolas", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            FileNameLabel.ForeColor = Color.White;
-            FileNameLabel.Location = new Point(15, 60);
-            FileNameLabel.Margin = new Padding(15, 10, 15, 0);
-            FileNameLabel.Name = "FileNameLabel";
-            FileNameLabel.Padding = new Padding(3);
-            FileNameLabel.Size = new Size(1036, 36);
-            FileNameLabel.TabIndex = 1;
-            FileNameLabel.TextAlign = ContentAlignment.MiddleCenter;
-            // 
             // BrowseButton
             // 
             BrowseButton.Anchor = AnchorStyles.None;
@@ -111,7 +94,7 @@
             BrowseButton.FlatStyle = FlatStyle.Flat;
             BrowseButton.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold, GraphicsUnit.Point, 0);
             BrowseButton.ForeColor = Color.White;
-            BrowseButton.Location = new Point(482, 101);
+            BrowseButton.Location = new Point(482, 94);
             BrowseButton.Margin = new Padding(3, 5, 3, 3);
             BrowseButton.Name = "BrowseButton";
             BrowseButton.Size = new Size(102, 40);
@@ -160,7 +143,7 @@
             StartButton.FlatStyle = FlatStyle.Flat;
             StartButton.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             StartButton.ForeColor = Color.White;
-            StartButton.Location = new Point(376, 185);
+            StartButton.Location = new Point(376, 182);
             StartButton.Name = "StartButton";
             StartButton.Size = new Size(97, 44);
             StartButton.TabIndex = 2;
@@ -178,7 +161,7 @@
             AbortButton.FlatStyle = FlatStyle.Flat;
             AbortButton.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             AbortButton.ForeColor = Color.White;
-            AbortButton.Location = new Point(479, 185);
+            AbortButton.Location = new Point(479, 182);
             AbortButton.Name = "AbortButton";
             AbortButton.Size = new Size(107, 44);
             AbortButton.TabIndex = 2;
@@ -203,15 +186,30 @@
             // 
             ComPorts.Anchor = AnchorStyles.Left;
             ComPorts.BackColor = Color.Black;
+            ComPorts.DropDownStyle = ComboBoxStyle.DropDownList;
             ComPorts.FlatStyle = FlatStyle.Flat;
             ComPorts.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             ComPorts.ForeColor = Color.White;
             ComPorts.FormattingEnabled = true;
-            ComPorts.Location = new Point(592, 187);
+            ComPorts.Location = new Point(592, 184);
             ComPorts.Name = "ComPorts";
             ComPorts.Size = new Size(147, 40);
             ComPorts.TabIndex = 4;
             ComPorts.DropDown += ComPorts_DropDown;
+            // 
+            // BinFileBox
+            // 
+            BinFileBox.BackColor = Color.FromArgb(64, 64, 0);
+            MainGrid.SetColumnSpan(BinFileBox, 3);
+            BinFileBox.Dock = DockStyle.Fill;
+            BinFileBox.Font = new Font("Consolas", 11F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            BinFileBox.ForeColor = Color.Gold;
+            BinFileBox.Location = new Point(13, 53);
+            BinFileBox.Margin = new Padding(13, 3, 13, 3);
+            BinFileBox.Name = "BinFileBox";
+            BinFileBox.Size = new Size(1040, 33);
+            BinFileBox.TabIndex = 5;
+            BinFileBox.TextAlign = HorizontalAlignment.Center;
             // 
             // UI
             // 
@@ -235,11 +233,11 @@
         private TableLayoutPanel StatusPanel;
         private Label StatusLabel;
         private Label label1;
-        private Label FileNameLabel;
         private Button BrowseButton;
         private Button StartButton;
         private Button AbortButton;
         private TrackBar ProgressBar;
         private ComboBox ComPorts;
+        private TextBox BinFileBox;
     }
 }

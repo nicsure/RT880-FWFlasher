@@ -102,9 +102,11 @@ namespace RT880_FWFlasher
         }
 
 
-        private void Flash(string com, byte[] firmware)
+        private void Flash(string com, byte[] unpadded)
         {
-            int len = (int)Math.Ceiling(firmware.Length / 1024.0) * 1024;
+            int len = (int)Math.Ceiling(unpadded.Length / 1024.0) * 1024;
+            byte[] firmware = new byte[len];
+            Array.Copy(unpadded, 0, firmware, 0, unpadded.Length);
             if (OpenPort(com) is SerialPort port)
             {
                 flashingPort = port;
@@ -186,6 +188,7 @@ namespace RT880_FWFlasher
             StartButton.Enabled = false;
             AbortButton.Enabled = true;
             ComPorts.Enabled = false;
+            BinFileBox.Enabled = false;
             string portName = ComPorts.SelectedItem?.ToString() ?? string.Empty;
             using var task = Task.Run(() =>
             {
@@ -196,6 +199,7 @@ namespace RT880_FWFlasher
             StartButton.Enabled = true;
             AbortButton.Enabled = false;
             ComPorts.Enabled = true;
+            BinFileBox.Enabled = true;
         }
 
         private void ComPorts_DropDown(object sender, EventArgs e)

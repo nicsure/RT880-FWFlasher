@@ -217,7 +217,7 @@
             ClientSize = new Size(923, 318);
             Controls.Add(MainGrid);
             Name = "UI";
-            Text = "RT-880 Firmware Flasher";
+            Text = "RT-880 Firmware Flasher V1.1";
             MainGrid.ResumeLayout(false);
             MainGrid.PerformLayout();
             StatusPanel.ResumeLayout(false);

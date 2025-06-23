@@ -12,7 +12,7 @@ namespace RT880_FWFlasher
             EnumerateSerialPorts();
         }
 
-        public void EnumerateSerialPorts()
+        private void EnumerateSerialPorts()
         {
             var selected = ComPorts.SelectedItem;
             ComPorts.Items.Clear();
@@ -25,7 +25,7 @@ namespace RT880_FWFlasher
                 ComPorts.SelectedIndex = 0;
         }
 
-        public static byte[] ConstructPacket(int type, int address, byte[] data, int offset, int count)
+        private static byte[] ConstructPacket(int type, int address, byte[] data, int offset, int count)
         {
             byte[] packet = new byte[count + 4];
             int cs = packet.Length - 1;
@@ -41,7 +41,7 @@ namespace RT880_FWFlasher
             return packet;
         }
 
-        public static void ClosePort(SerialPort? port)
+        private static void ClosePort(SerialPort? port)
         {
             using (port)
             {
@@ -49,7 +49,7 @@ namespace RT880_FWFlasher
             }
         }
 
-        public static int ReadByte(SerialPort port)
+        private static int ReadByte(SerialPort port)
         {
             try
             {
@@ -59,7 +59,7 @@ namespace RT880_FWFlasher
             catch { return -1; }
         }
 
-        public bool GetAck(SerialPort port)
+        private bool GetAck(SerialPort port)
         {
             switch (ReadByte(port))
             {
@@ -71,7 +71,7 @@ namespace RT880_FWFlasher
             return false;
         }
 
-        public bool WriteData(SerialPort port, byte[] data)
+        private bool WriteData(SerialPort port, byte[] data)
         {
             try
             {
@@ -83,7 +83,7 @@ namespace RT880_FWFlasher
         }
 
 
-        public static SerialPort? OpenPort(string com)
+        private static SerialPort? OpenPort(string com)
         {
             SerialPort? port = null;
             try
@@ -101,7 +101,7 @@ namespace RT880_FWFlasher
         }
 
 
-        public void Flash(string com, byte[] firmware)
+        private void Flash(string com, byte[] firmware)
         {
             int len = (int)Math.Ceiling(firmware.Length / 1024.0) * 1024;
             if (OpenPort(com) is SerialPort port)
@@ -134,7 +134,7 @@ namespace RT880_FWFlasher
 
         }
 
-        public void SetProgress(int now, int len)
+        private void SetProgress(int now, int len)
         {
             Invoke(() =>
             {
@@ -146,7 +146,7 @@ namespace RT880_FWFlasher
             });
         }
 
-        public void SetStatus(string status)
+        private void SetStatus(string status)
         {
             Invoke(() =>
             {

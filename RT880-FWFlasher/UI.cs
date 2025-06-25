@@ -4,7 +4,12 @@ namespace RT880_FWFlasher
 {
     public partial class UI : Form
     {
-        private SerialPort? flashingPort = null;
+        private SerialPort? portInUse = null;
+        private string progString = "0%";
+        private const int flashSize = 1024 * 1024 * 4;
+
+
+        private string SelectedPortName => ComPorts.SelectedItem?.ToString() ?? string.Empty;
 
         public UI()
         {
@@ -84,14 +89,14 @@ namespace RT880_FWFlasher
         }
 
 
-        private static SerialPort? OpenPort(string com)
+        private static SerialPort? OpenPort(string com, int baud, int timeout)
         {
             SerialPort? port = null;
             try
             {
-                port = new SerialPort(com, 115200, Parity.None, 8, StopBits.One)
+                port = new SerialPort(com, baud, Parity.None, 8, StopBits.One)
                 {
-                    ReadTimeout = 20000
+                    ReadTimeout = timeout
                 };
                 port.Open();
                 return port;
@@ -107,9 +112,9 @@ namespace RT880_FWFlasher
             int len = (int)Math.Ceiling(unpadded.Length / 1024.0) * 1024;
             byte[] firmware = new byte[len];
             Array.Copy(unpadded, 0, firmware, 0, unpadded.Length);
-            if (OpenPort(com) is SerialPort port)
+            if (OpenPort(com, 115200, 20000) is SerialPort port)
             {
-                flashingPort = port;
+                portInUse = port;
                 try
                 {
                     SetStatus("Erasing Flash");
@@ -146,7 +151,8 @@ namespace RT880_FWFlasher
                 d *= 100;
                 if (d < 0) d = 0; else if (d > 100) d = 100;
                 ProgressBar.Value = (int)d;
-                SetStatus($"Progress: {(int)d}%");
+                progString = $"{(int)d}%";
+                SetStatus($"Progress: {progString}");
             });
         }
 
@@ -172,6 +178,17 @@ namespace RT880_FWFlasher
             }
         }
 
+        private void Busy(bool busy)
+        {
+            BrowseButton.Enabled = !busy;
+            StartButton.Enabled = BinFileBox.Text.Length != 0 && !busy;
+            AbortButton.Enabled = busy;
+            ComPorts.Enabled = !busy;
+            SpiBackupButton.Enabled = !busy;
+            BinFileBox.Enabled = !busy;
+            MonitorButton.Enabled = !busy;
+        }
+
         private async void StartButton_Click(object sender, EventArgs e)
         {
             byte[] firmware;
@@ -184,22 +201,15 @@ namespace RT880_FWFlasher
                 SetStatus("Cannot read firmware bin file");
                 return;
             }
-            BrowseButton.Enabled = false;
-            StartButton.Enabled = false;
-            AbortButton.Enabled = true;
-            ComPorts.Enabled = false;
-            BinFileBox.Enabled = false;
-            string portName = ComPorts.SelectedItem?.ToString() ?? string.Empty;
+            Busy(true);
+            string portName = SelectedPortName;
+            SetProgress(0, 100);
             using var task = Task.Run(() =>
             {
                 Flash(portName, firmware);
             });
             await task;
-            BrowseButton.Enabled = true;
-            StartButton.Enabled = true;
-            AbortButton.Enabled = false;
-            ComPorts.Enabled = true;
-            BinFileBox.Enabled = true;
+            Busy(false);
         }
 
         private void ComPorts_DropDown(object sender, EventArgs e)
@@ -209,7 +219,140 @@ namespace RT880_FWFlasher
 
         private void AbortButton_Click(object sender, EventArgs e)
         {
-            ClosePort(flashingPort);
+            ClosePort(portInUse);
+        }
+
+        private async void MonitorButton_Click(object sender, EventArgs e)
+        {
+            Busy(true);
+            MonitorBox.BorderStyle = BorderStyle.Fixed3D;
+            if (OpenPort(SelectedPortName, 115200, 100000000) is SerialPort port)
+            {
+                portInUse = port;
+                SetStatus($"Monitoring Port {SelectedPortName}");
+                using var task = Task.Run(() =>
+                {
+                    while (true)
+                    {
+                        int b = ReadByte(port);
+                        if (b < 0)
+                            break;
+                        Invoke(() =>
+                        {
+                            if (MonitorTextMode.Checked)
+                            {
+                                if (b == 0)
+                                    MonitorBox.AppendText("\r\n");
+                                else
+                                {
+                                    if (b < 32 || b > 126)
+                                        b = '.';
+                                    MonitorBox.AppendText(((char)b).ToString());
+                                }
+                            }
+                            else
+                            {
+                                MonitorBox.AppendText($"{b:X2} ");
+                            }
+                        });
+                    }
+                });
+                await task;
+                SetStatus($"Monitoring Stopped");
+            }
+            Busy(false);
+            MonitorBox.BorderStyle = BorderStyle.FixedSingle;
+        }
+
+        private static bool TryReadByte(SerialPort port, out int b)
+        {
+            b = ReadByte(port);
+            return b >= 0;
+        }
+
+        private async void SpiBackupButton_Click(object sender, EventArgs e)
+        {
+            byte[] spi = new byte[flashSize];
+            Busy(true);
+            SetProgress(0, 100);
+            if (OpenPort(SelectedPortName, 230400, 100000000) is SerialPort port)
+            {
+                portInUse = port;
+                SetStatus("Waiting for Radio");
+                using var task = Task.Run(() =>
+                {
+                    int raddr, addr, i;
+                    byte cs, rcs;
+                    addr = 0;
+                    while(true)
+                    {
+                        if (!TryReadByte(port, out int b)) break;
+                        if (b != 0xaa) continue;
+                        if (!TryReadByte(port, out b)) break;
+                        if (b != 0x30) continue;
+                        raddr = 0;
+                        cs = 0;
+
+                        for (i = 0; i < 4; i++)
+                        {
+                            if (!TryReadByte(port, out b)) break;
+                            raddr |= b << (i * 8);
+                            cs += (byte)b;
+                        }
+                        if (addr != raddr)
+                            continue;
+
+                        for (i = 0; i < 1024; i++)
+                        {
+                            if (!TryReadByte(port, out b)) break;
+                            spi[addr + i] = (byte)b;
+                            cs += (byte)b;
+                        }
+                        if (i < 1024)
+                            continue;
+
+                        if (!TryReadByte(port, out b)) break;
+                        rcs = (byte)b;
+                        if (!TryReadByte(port, out b)) break;
+                        if (b != 0x55)
+                            continue;
+                        if (cs != rcs)
+                            continue;
+                        addr += 1024;
+                        Invoke(() => 
+                        {
+                            SetProgress(addr, flashSize);
+                            SetStatus($"Got Block 0x{raddr:X8}  {progString}");
+                            while (addr >= flashSize)
+                            {
+                                using SaveFileDialog sfd = new()
+                                {
+                                    Title = "Save SPI Flash Backup Image",
+                                    Filter = "880SPI Files|*.880spi"
+                                };
+                                if (sfd.ShowDialog() == DialogResult.OK)
+                                {
+                                    try
+                                    {
+                                        File.WriteAllBytes(sfd.FileName, spi);
+                                    }
+                                    catch
+                                    {
+                                        SetStatus("Unable to write to file, try again.");
+                                        continue;
+                                    }
+                                }
+                                break;
+                            }
+                        });
+                        if (addr >= flashSize) break;
+
+                    }
+                });
+                await task;
+                ClosePort(port);
+            }
+            Busy(false);
         }
     }
 }
